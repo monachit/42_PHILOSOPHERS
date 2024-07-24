@@ -6,7 +6,7 @@
 /*   By: monachit <monachit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:40 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/19 14:43:34 by monachit         ###   ########.fr       */
+/*   Updated: 2024/07/24 17:42:28 by monachit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,16 @@ void *ft_fork(void *arg)
     t_philo *philo = (t_philo *)arg;
     int left_fork;
     int right_fork;
+    struct timeval tv;
 
+    gettimeofday(&tv, NULL);
+    if (philo->id % 2 == 0)
+        usleep(1000);
     left_fork = philo->id;
     right_fork = (philo->id + 1) % philo->num_philo;
     while (1)
     {
+        printf("philo %d is thinking\n", philo->id);
         pthread_mutex_lock(&philo->forks[left_fork]);
         pthread_mutex_lock(&philo->forks[right_fork]);
         printf("philo %d has taken a fork\n", philo->id);
