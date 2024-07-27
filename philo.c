@@ -3,14 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   philo.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: monachit <monachit@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:40 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/24 17:42:28 by monachit         ###   ########.fr       */
+/*   Updated: 2024/07/27 10:35:06 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
+
+
+int check_dead(t_philo *philo, int time, int f, int l)
+{
+    static int i = 0;
+
+    i += (f / 10000) - (l / 10000);
+    if (i > philo->time_to_die)
+        return (1);
+    return (0);
+    
+}
 
 
 void *ft_fork(void *arg)
@@ -19,9 +31,10 @@ void *ft_fork(void *arg)
     int left_fork;
     int right_fork;
     struct timeval tv;
+    int time;
 
-    gettimeofday(&tv, NULL);
-    if (philo->id % 2 == 0)
+    time = 0;
+    if (philo->id % 2 != 0)
         usleep(1000);
     left_fork = philo->id;
     right_fork = (philo->id + 1) % philo->num_philo;
@@ -30,14 +43,28 @@ void *ft_fork(void *arg)
         printf("philo %d is thinking\n", philo->id);
         pthread_mutex_lock(&philo->forks[left_fork]);
         pthread_mutex_lock(&philo->forks[right_fork]);
-        printf("philo %d has taken a fork\n", philo->id);
-        printf("philo %d has taken a fork\n", philo->id);
+        gettimeofday(&tv, NULL);
+        philo->first_eat = tv.tv_usec;
+        printf("1 == philo %d has taken a fork\n", philo->id);
+        printf("2 == philo %d has taken a fork\n", philo->id);
         printf("philo %d is eating\n", philo->id);
         usleep(philo->time_to_eat * 10000);
+        gettimeofday(&tv, NULL);
+        philo->last_eat = tv.tv_usec;
+        time++;
+        if (time == philo->id)
+            time = 0;
+        if (check_dead(philo, time, philo->first_eat, philo->last_eat) == 1)
+        {
+            pthread_mutex_unlock(&philo->forks[left_fork]);
+            pthread_mutex_unlock(&philo->forks[right_fork]);
+            printf("philo %d is dead\n", philo->id);
+            return (NULL);
+        }
         pthread_mutex_unlock(&philo->forks[left_fork]);
         pthread_mutex_unlock(&philo->forks[right_fork]);
         usleep(philo->time_to_sleep * 10000);
-    }  
+    }
    
     return (NULL);
 }

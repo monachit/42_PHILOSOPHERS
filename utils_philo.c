@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils_philo.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: monachit <monachit@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 11:15:19 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/17 17:20:51 by monachit         ###   ########.fr       */
+/*   Updated: 2024/07/27 10:33:46 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,8 @@ t_philo    *ft_inisialize_philo(t_philo *philo, char **av, int number, pthread_m
     philo = malloc(sizeof(t_philo));
     philo->next = NULL;
     philo->id = number;
+    philo->first_eat = 0;
+    philo->last_eat = 0;
     philo->num_philo = ft_atoi(av[1]);
     philo->time_to_die = ft_atoi(av[2]);
     philo->time_to_eat = ft_atoi(av[3]);

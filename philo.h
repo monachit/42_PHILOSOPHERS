@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: monachit <monachit@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:54 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/17 17:32:47 by monachit         ###   ########.fr       */
+/*   Updated: 2024/07/27 10:15:17 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,8 @@ typedef struct t_philo
 {
     int id;
     int num_philo;
-    int last_meal;
+    int first_eat;
+    int last_eat;
     int time_to_die;
     int time_to_eat;
     int time_to_sleep;
