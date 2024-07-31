@@ -6,24 +6,33 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:40 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/27 10:35:06 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/07/31 12:40:03 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
 
-int check_dead(t_philo *philo, int time, int f, int l)
+int check_dead(t_philo **philo, int time, int f, int l)
 {
     static int i = 0;
 
     i += (f / 10000) - (l / 10000);
-    if (i > philo->time_to_die)
+    if (i > (*philo)->time_to_die)
+    {
+        (*philo)->minor->flag = 1;
         return (1);
+    }
     return (0);
     
 }
 
+int check_minor(t_philo *philo)
+{
+    if (philo->minor->flag == 1)
+        return (1);
+    return (0);
+}
 
 void *ft_fork(void *arg)
 {
@@ -37,9 +46,11 @@ void *ft_fork(void *arg)
     if (philo->id % 2 != 0)
         usleep(1000);
     left_fork = philo->id;
-    right_fork = (philo->id + 1) % philo->num_philo;
+    right_fork = (philo->id + 1) % philo->num_philo; 
     while (1)
     {
+        if (check_minor(philo) == 1)
+            return (NULL);
         printf("philo %d is thinking\n", philo->id);
         pthread_mutex_lock(&philo->forks[left_fork]);
         pthread_mutex_lock(&philo->forks[right_fork]);
@@ -54,7 +65,7 @@ void *ft_fork(void *arg)
         time++;
         if (time == philo->id)
             time = 0;
-        if (check_dead(philo, time, philo->first_eat, philo->last_eat) == 1)
+        if (check_dead(&philo, time, philo->first_eat, philo->last_eat) == 1)
         {
             pthread_mutex_unlock(&philo->forks[left_fork]);
             pthread_mutex_unlock(&philo->forks[right_fork]);
@@ -79,6 +90,9 @@ int main(int ac, char **av)
     t_philo *philo;
     pthread_t thread[ft_atoi(av[1])];
     pthread_mutex_t forks[ft_atoi(av[1])];
+    t_minor monitor;
+
+    monitor.flag = 0;
     int i;
     int number;
 
@@ -93,7 +107,7 @@ int main(int ac, char **av)
     number = 0;
     while (i != 0)
     {
-        ft_lstadd_back1(&philo, ft_inisialize_philo(philo, av, number, forks));
+        ft_lstadd_back1(&philo, ft_inisialize_philo(philo, av, number, forks, &monitor));
         number++;
         i--;
     }

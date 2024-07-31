@@ -6,7 +6,7 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 11:15:19 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/27 10:33:46 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/07/31 12:39:25 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,9 +38,10 @@ int check_args(int ac, char **av)
     return (0);
 }
 
-t_philo    *ft_inisialize_philo(t_philo *philo, char **av, int number, pthread_mutex_t *forks)
+t_philo    *ft_inisialize_philo(t_philo *philo, char **av, int number, pthread_mutex_t *forks, t_minor *monitor)
 {
     philo = malloc(sizeof(t_philo));
+    philo->minor = monitor;
     philo->next = NULL;
     philo->id = number;
     philo->first_eat = 0;

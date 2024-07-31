@@ -6,7 +6,7 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:54 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/27 10:15:17 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/07/31 12:46:22 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,11 @@
 # define NUM_PHILOSOPHERS 5
 
 
+typedef struct t_minor
+{
+    pthread_mutex_t *print;
+    int flag;
+}              t_minor;
 typedef struct t_philo
 {
     int id;
@@ -33,13 +38,15 @@ typedef struct t_philo
     int time_to_die;
     int time_to_eat;
     int time_to_sleep;
+    t_minor *minor;
     pthread_mutex_t *forks;
     struct t_philo *next;
+    
 }               t_philo;
 
  
 
 void ft_lstadd_back1(t_philo **philo, t_philo *new);
 int check_args(int ac, char **av);
-t_philo    *ft_inisialize_philo(t_philo *philo, char **av, int number, pthread_mutex_t *forks);
+t_philo    *ft_inisialize_philo(t_philo *philo, char **av, int number, pthread_mutex_t *forks, t_minor *monitor);
 # endif
