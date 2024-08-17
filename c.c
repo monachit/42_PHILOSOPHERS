@@ -1,18 +1,28 @@
+#include <pthread.h>
 #include <stdio.h>
-#include <sys/time.h>
+#include <stdlib.h>
+
+void* myThread(void* arg) {
+    int* val = (int*)arg;
+    printf("Thread is running. Value: %d\n", *val);
+    pthread_exit(NULL);
+}
 
 int main() {
-    struct timeval tv;
-    int ret;
+    pthread_t thread;
+    int value = 10;
 
-    ret = gettimeofday(&tv, NULL);
-    if (ret == 0) {
-        printf("Seconds: %ld\n", tv.tv_sec);
-        printf("Microseconds: %ld\n", tv.tv_usec);
-    } else {
-        perror("gettimeofday");
-    }
+    // Create a new thread
+    pthread_create(&thread, NULL, myThread, (void*)&value);
+
+    // Detach the thread
+    pthread_detach(thread);
+
+    printf("Thread detached. Main thread continues...\n");
+
+    // Main thread continues executing while the other thread runs independently
+    // sleep(1); // Give the detached thread time to finish
+    usleep(1000);
 
     return 0;
 }
-

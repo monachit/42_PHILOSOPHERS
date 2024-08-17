@@ -6,26 +6,12 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:40 by monachit          #+#    #+#             */
-/*   Updated: 2024/07/31 12:40:03 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/08/17 11:00:02 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-
-int check_dead(t_philo **philo, int time, int f, int l)
-{
-    static int i = 0;
-
-    i += (f / 10000) - (l / 10000);
-    if (i > (*philo)->time_to_die)
-    {
-        (*philo)->minor->flag = 1;
-        return (1);
-    }
-    return (0);
-    
-}
 
 int check_minor(t_philo *philo)
 {
@@ -34,50 +20,70 @@ int check_minor(t_philo *philo)
     return (0);
 }
 
+size_t    time_now()
+{
+    size_t time;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    time = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    return time;
+}
+
+void    ft_printf(char *str, t_philo *philo)
+{
+    if (philo->minor->flag == 1)
+        return ;
+    printf("%zu philo %zu %s\n", time_now() - philo->minor->timef ,philo->id, str);
+}
+
 void *ft_fork(void *arg)
 {
     t_philo *philo = (t_philo *)arg;
     int left_fork;
     int right_fork;
-    struct timeval tv;
-    int time;
-
-    time = 0;
     if (philo->id % 2 != 0)
-        usleep(1000);
+        usleep(100);
     left_fork = philo->id;
     right_fork = (philo->id + 1) % philo->num_philo; 
-    while (1)
+    while (1 == 1)
     {
-        if (check_minor(philo) == 1)
-            return (NULL);
-        printf("philo %d is thinking\n", philo->id);
-        pthread_mutex_lock(&philo->forks[left_fork]);
-        pthread_mutex_lock(&philo->forks[right_fork]);
-        gettimeofday(&tv, NULL);
-        philo->first_eat = tv.tv_usec;
-        printf("1 == philo %d has taken a fork\n", philo->id);
-        printf("2 == philo %d has taken a fork\n", philo->id);
-        printf("philo %d is eating\n", philo->id);
-        usleep(philo->time_to_eat * 10000);
-        gettimeofday(&tv, NULL);
-        philo->last_eat = tv.tv_usec;
-        time++;
-        if (time == philo->id)
-            time = 0;
-        if (check_dead(&philo, time, philo->first_eat, philo->last_eat) == 1)
-        {
-            pthread_mutex_unlock(&philo->forks[left_fork]);
-            pthread_mutex_unlock(&philo->forks[right_fork]);
-            printf("philo %d is dead\n", philo->id);
-            return (NULL);
-        }
-        pthread_mutex_unlock(&philo->forks[left_fork]);
-        pthread_mutex_unlock(&philo->forks[right_fork]);
-        usleep(philo->time_to_sleep * 10000);
+        ft_printf("is thinking", philo);
+        pthread_mutex_lock(&philo->forks);
+        ft_printf("has taken the fork", philo);
+        pthread_mutex_lock(&philo->forks);
+        ft_printf("has taken a fork", philo);
+        ft_printf("is eating", philo);
+        philo->first_eat = time_now();
+        usleep(philo->time_to_eat * 1000);
+        pthread_mutex_unlock(&philo->forks);
+        pthread_mutex_unlock(&philo->forks);
+        ft_printf("is sleeping", philo);
+        usleep(100);
     }
    
     return (NULL);
+}
+
+void ft_monitor(void *arg)
+{
+    t_philo *philo;
+    t_philo *philo2;
+    size_t  i;
+    
+    philo = (t_philo *)arg;
+    philo2 = philo;
+    while (!check_minor(philo2))
+    {
+        i = time_now();
+        if (i - philo2->first_eat >= philo2->time_to_die)
+        {
+            printf("%zu  == %zu === %zu  philo %zu is dead\n", i, philo2->first_eat, i - philo2->first_eat, philo2->id);
+            philo->minor->flag = 1;
+        }
+        philo2  = philo2->next;
+        if (philo2 == NULL)
+            philo2 = philo;
+    }
 }
 
 int main(int ac, char **av)
@@ -88,10 +94,8 @@ int main(int ac, char **av)
     if (check_args(ac, av))
         return (printf("Error: wrong arguments\n"), 1);
     t_philo *philo;
-    pthread_t thread[ft_atoi(av[1])];
-    pthread_mutex_t forks[ft_atoi(av[1])];
     t_minor monitor;
-
+    monitor.timef = time_now();
     monitor.flag = 0;
     int i;
     int number;
@@ -99,29 +103,31 @@ int main(int ac, char **av)
     number = 0;
     philo = NULL;
     i = ft_atoi(av[1]);
-    while (number < i)
-    {
-        pthread_mutex_init(&forks[number], NULL);
-        number++;
-    }
     number = 0;
     while (i != 0)
     {
-        ft_lstadd_back1(&philo, ft_inisialize_philo(philo, av, number, forks, &monitor));
+        ft_lstadd_back1(&philo, ft_inisialize_philo(philo, av, number, &monitor));
         number++;
         i--;
     }
     t_philo *philo1 = philo;
     while (philo1)
     {
-        pthread_create(&thread[philo1->id], NULL, ft_fork, (void *)philo1);
+        pthread_create(&philo1->threads, NULL, ft_fork, (void *)philo1);
         philo1 = philo1->next;
     }
     philo1 = philo;
     while (philo1)
     {
-        pthread_join(thread[philo1->id], NULL);
+        pthread_join(philo1->threads, NULL);
         philo1 = philo1->next;
     }
+    ft_monitor(philo);
     return (0);
 }
+
+
+// time >>> 
+// function print >> 
+//  function monitor >> 
+// 
