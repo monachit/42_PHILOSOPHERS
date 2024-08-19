@@ -38,18 +38,20 @@ int check_args(int ac, char **av)
     return (0);
 }
 
-t_philo    *ft_inisialize_philo(t_philo *philo, char **av, size_t number, t_minor *monitor)
+t_philo    *ft_inisialize_philo(char **av, size_t number, t_minor *monitor)
 {
+    t_philo *philo;
+
     philo = malloc(sizeof(t_philo));
+    if (!philo) // Check if malloc failed
+        return (NULL);
     philo->minor = monitor;
     philo->next = NULL;
     philo->id = number;
     philo->first_eat = time_now();
-    philo->last_eat = 0;
     philo->num_philo = ft_atoi(av[1]);
     philo->time_to_die = ft_atoi(av[2]);
     philo->time_to_eat = ft_atoi(av[3]);
     philo->time_to_sleep = ft_atoi(av[4]);
-    pthread_mutex_init(&philo->forks, NULL);
     return (philo);
 }

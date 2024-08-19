@@ -31,59 +31,86 @@ size_t    time_now()
 
 void    ft_printf(char *str, t_philo *philo)
 {
-    if (philo->minor->flag == 1)
-        return ;
+    pthread_mutex_lock(&philo->minor->mtx_print);
     printf("%zu philo %zu %s\n", time_now() - philo->minor->timef ,philo->id, str);
+    pthread_mutex_unlock(&philo->minor->mtx_print);
+}
+
+void    ft_update_last_eat(t_philo **philo)
+{
+    pthread_mutex_lock(&(*philo)->minor->mtx_last_eat);
+    (*philo)->first_eat = time_now();
+    pthread_mutex_unlock(&(*philo)->minor->mtx_last_eat);
+}
+
+void	ft_eat(t_philo *group)
+{
+	unsigned long long	deff;
+
+	deff = time_now();
+	while (time_now() - deff <= (unsigned long long )group->time_to_eat)
+    {
+		usleep(500);
+	}
+}
+
+void	ft_sleep(t_philo *group)
+{
+	unsigned long long	deff;
+
+	deff = time_now();
+	while (time_now() - deff <= (unsigned long long )group->time_to_sleep)
+	{
+		usleep(500);
+	}
 }
 
 void *ft_fork(void *arg)
 {
     t_philo *philo = (t_philo *)arg;
-    int left_fork;
-    int right_fork;
+    int left_fork = philo->id ;
+    int  right_fork = (philo->id + 1) % philo->num_philo; 
     if (philo->id % 2 != 0)
         usleep(100);
-    left_fork = philo->id;
-    right_fork = (philo->id + 1) % philo->num_philo; 
-    while (1 == 1)
+    while (!check_minor(philo))
     {
-        ft_printf("is thinking", philo);
-        pthread_mutex_lock(&philo->forks);
         ft_printf("has taken the fork", philo);
-        pthread_mutex_lock(&philo->forks);
+        pthread_mutex_lock(&philo->minor->forks[left_fork]);
         ft_printf("has taken a fork", philo);
+        pthread_mutex_lock(&philo->minor->forks[right_fork]);
         ft_printf("is eating", philo);
-        philo->first_eat = time_now();
-        usleep(philo->time_to_eat * 1000);
-        pthread_mutex_unlock(&philo->forks);
-        pthread_mutex_unlock(&philo->forks);
+        ft_update_last_eat(&philo);
+        ft_eat(philo);
+        pthread_mutex_unlock(&philo->minor->forks[left_fork]);
+        pthread_mutex_unlock(&philo->minor->forks[right_fork]);
         ft_printf("is sleeping", philo);
-        usleep(100);
+        ft_sleep(philo);
+        ft_printf("is thinking", philo);
     }
    
     return (NULL);
 }
 
-void ft_monitor(void *arg)
+void *ft_monitor(void *arg)
 {
     t_philo *philo;
     t_philo *philo2;
-    size_t  i;
     
     philo = (t_philo *)arg;
     philo2 = philo;
     while (!check_minor(philo2))
     {
-        i = time_now();
-        if (i - philo2->first_eat >= philo2->time_to_die)
+        if (time_now() - philo2->first_eat >= philo2->time_to_die)
         {
-            printf("%zu  == %zu === %zu  philo %zu is dead\n", i, philo2->first_eat, i - philo2->first_eat, philo2->id);
+            pthread_mutex_lock(&philo->minor->mtx_print);
+            printf("%zu %d is dead\n", time_now() - philo2->first_eat, philo2->id);
             philo->minor->flag = 1;
         }
         philo2  = philo2->next;
         if (philo2 == NULL)
             philo2 = philo;
     }
+    return (NULL);
 }
 
 int main(int ac, char **av)
@@ -95,39 +122,48 @@ int main(int ac, char **av)
         return (printf("Error: wrong arguments\n"), 1);
     t_philo *philo;
     t_minor monitor;
+    pthread_t   l7aday;
     monitor.timef = time_now();
     monitor.flag = 0;
+    monitor.threads = malloc(sizeof(pthread_t) *  ft_atoi(av[1]));
+    monitor.forks = malloc(sizeof(pthread_mutex_t) *  ft_atoi(av[1]));
+    pthread_mutex_init(&monitor.mtx_print, NULL);
+	pthread_mutex_init(&monitor.mtx_last_eat, NULL);
+	pthread_mutex_init(&monitor.mtx_philo_done, NULL);
+	pthread_mutex_init(&monitor.mtx_flag, NULL);
     int i;
     int number;
-
     number = 0;
+    while (number != ft_atoi(av[1]))
+    {
+        pthread_mutex_init(&monitor.forks[number], NULL);
+        number++;
+    }
     philo = NULL;
     i = ft_atoi(av[1]);
     number = 0;
     while (i != 0)
-    {
-        ft_lstadd_back1(&philo, ft_inisialize_philo(philo, av, number, &monitor));
-        number++;
-        i--;
+    {   
+        t_philo *new_philo = ft_inisialize_philo(av, number, &monitor);
+         if (!new_philo)
+             return (printf("Error: failed to allocate memory for philosopher\n"), 1);
+         ft_lstadd_back1(&philo, new_philo);
+         number++;
+         i--;
     }
     t_philo *philo1 = philo;
     while (philo1)
     {
-        pthread_create(&philo1->threads, NULL, ft_fork, (void *)philo1);
+        pthread_create(&philo->minor->threads[i], NULL, ft_fork, (void *)philo1);
         philo1 = philo1->next;
     }
     philo1 = philo;
+    pthread_create(&l7aday, NULL, &ft_monitor, (void *)philo);
     while (philo1)
     {
-        pthread_join(philo1->threads, NULL);
+        pthread_join(philo1->minor->threads[i], NULL);
         philo1 = philo1->next;
     }
-    ft_monitor(philo);
+    pthread_join(l7aday, NULL);
     return (0);
 }
-
-
-// time >>> 
-// function print >> 
-//  function monitor >> 
-// 
