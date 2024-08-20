@@ -6,7 +6,7 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/17 11:15:19 by monachit          #+#    #+#             */
-/*   Updated: 2024/08/17 10:48:53 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/08/20 18:53:31 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,14 +38,14 @@ int check_args(int ac, char **av)
     return (0);
 }
 
-t_philo    *ft_inisialize_philo(char **av, size_t number, t_minor *monitor)
+t_philo    *ft_inisialize_philo(char **av, size_t number, t_minor **monitor, int ac)
 {
     t_philo *philo;
 
     philo = malloc(sizeof(t_philo));
     if (!philo) // Check if malloc failed
         return (NULL);
-    philo->minor = monitor;
+    philo->minor = *monitor;
     philo->next = NULL;
     philo->id = number;
     philo->first_eat = time_now();
@@ -53,5 +53,9 @@ t_philo    *ft_inisialize_philo(char **av, size_t number, t_minor *monitor)
     philo->time_to_die = ft_atoi(av[2]);
     philo->time_to_eat = ft_atoi(av[3]);
     philo->time_to_sleep = ft_atoi(av[4]);
+    if (ac == 6)
+        philo->meals = ft_atoi(av[5]);
+    else
+        philo->meals = -1;
     return (philo);
 }

@@ -2,8 +2,8 @@ NAME = philo
 
 CC = cc
 
-CFLAGS = -Wall -g3 -fsanitize=address
-SRCS = philo.c linkedlist.c utils_philo.c
+CFLAGS = -Wall #-g3 -fsanitize=address
+SRCS = philo.c linkedlist.c utils_philo.c help.c
 
 OBJS = $(SRCS:.c=.o)
 

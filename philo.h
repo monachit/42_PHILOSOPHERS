@@ -6,7 +6,7 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:54 by monachit          #+#    #+#             */
-/*   Updated: 2024/08/17 10:40:18 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/08/20 18:49:21 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ typedef struct t_philo
     size_t time_to_die;
     size_t time_to_eat;
     size_t time_to_sleep;
+    size_t  meals;
     t_minor *minor;
     struct t_philo *next;
     
@@ -54,6 +55,13 @@ typedef struct t_philo
 
 void ft_lstadd_back1(t_philo **philo, t_philo *new);
 int check_args(int ac, char **av);
-t_philo    *ft_inisialize_philo(char **av, size_t numbe, t_minor *monitor);
+t_philo    *ft_inisialize_philo(char **av, size_t numbe, t_minor **monitor,  int ac);
 size_t    time_now();
+void    ft_update_last_eat(t_philo **philo);
+void    ft_printf(char *str, t_philo *philo);
+size_t    time_now();
+int check_minor(t_philo *philo);
+void	ft_eat(t_philo *group);
+void	ft_sleep(t_philo *group);
+
 # endif
