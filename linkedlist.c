@@ -12,17 +12,17 @@
 
 #include "philo.h"
 
-void ft_lstadd_back1(t_philo **philo, t_philo *new)
+void	ft_lstadd_back1(t_philo **philo, t_philo *new)
 {
-    t_philo *tmp;
+	t_philo	*tmp;
 
-    if (!*philo)
-    {
-        *philo = new;
-        return ;
-    }
-    tmp = *philo;
-    while (tmp->next)
-        tmp = tmp->next;
-    tmp->next = new;
+	if (!*philo)
+	{
+		*philo = new;
+		return ;
+	}
+	tmp = *philo;
+	while (tmp->next)
+		tmp = tmp->next;
+	tmp->next = new;
 }
