@@ -6,42 +6,71 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/21 19:31:46 by mnachit           #+#    #+#             */
-/*   Updated: 2024/08/23 15:51:56 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/09/03 10:52:39 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+void	is_eat(t_philo **philo)
+{
+	ft_printf("is eating", *philo);
+	ft_update_last_eat(philo);
+	ft_sleep((*philo)->time_to_eat);
+}
+
+void	is_sleep1(t_philo **philo)
+{
+	ft_printf("is sleeping", *philo);
+	ft_sleep((*philo)->time_to_sleep);
+	ft_printf("is thinking", *philo);
+}
+
+void	ft_take_theforks(t_philo *philo)
+{
+	if (philo->id % 2 != 0)
+	{
+		pthread_mutex_lock(philo->left_fork);
+		ft_printf("has taken a fork", philo);
+		pthread_mutex_lock(philo->right_fork);
+		ft_printf("has taken a fork", philo);
+	}
+	else
+	{
+		pthread_mutex_lock(philo->right_fork);
+		ft_printf("has taken a fork", philo);
+		pthread_mutex_lock(philo->left_fork);
+		ft_printf("has taken a fork", philo);
+	}
+}
+
 void	*ft_fork(void *arg)
 {
 	t_philo	*philo;
-	int	i;
 
-	i = 0;
 	philo = (t_philo *)arg;
-	if (philo->id % 2 != 0)
-		usleep(100);
-	while (!check_minor(philo))
+	while (!check_minor(philo) && philo->meals != 0)
 	{
-		pthread_mutex_lock(philo->left_fork);
-		ft_printf("has taken the fork", philo);
-		pthread_mutex_lock(philo->right_fork);
-		ft_printf("has taken a fork", philo);
-		ft_printf("is eating", philo);
-		ft_update_last_eat(&philo);
-		ft_eat(philo);
+		ft_take_theforks(philo);
+		is_eat(&philo);
 		pthread_mutex_unlock(philo->left_fork);
 		pthread_mutex_unlock(philo->right_fork);
-		ft_printf("is sleeping", philo);
-		ft_sleep(philo);
-		ft_printf("is thinking", philo);
+		is_sleep1(&philo);
+		usleep(200);
+		philo->meals--;
 	}
+	pthread_mutex_lock(&philo->minor->check_died);
+	philo->minor->flag = 1;
+	pthread_mutex_unlock(&philo->minor->check_died);
 	return (NULL);
 }
 
 int	check_minor(t_philo *philo)
 {
-	if (philo->minor->flag == 1)
-		return (1);
-	return (0);
+	int	result;
+
+	pthread_mutex_lock(&philo->minor->check_died);
+	result = philo->minor->flag;
+	pthread_mutex_unlock(&philo->minor->check_died);
+	return (result);
 }

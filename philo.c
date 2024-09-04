@@ -6,94 +6,86 @@
 /*   By: mnachit <mnachit@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/10 13:38:40 by monachit          #+#    #+#             */
-/*   Updated: 2024/08/23 15:52:41 by mnachit          ###   ########.fr       */
+/*   Updated: 2024/09/03 11:36:56 by mnachit          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-void	*ft_monitor(void *arg)
-{
-	t_philo	*philo;
-	t_philo	*philo2;
-
-	philo = (t_philo *)arg;
-	philo2 = philo;
-	while (!check_minor(philo2))
-	{
-		if (time_now() - philo2->first_eat >= philo2->time_to_die)
-		{
-			pthread_mutex_lock(&philo2->minor->mtx_print);
-			printf("%zu %zu is dead\n", time_now() - philo2->first_eat,
-				philo2->id);
-			philo2->minor->flag = 1;
-			pthread_mutex_unlock(&philo2->minor->mtx_print);
-		}
-		philo2 = philo2->next;
-		if (philo2 == NULL)
-			philo2 = philo;
-	}
-	return (NULL);
-}
-
-void	ft_init_monitor(t_minor **monitor, int ac, char **av)
+void	ft_init_monitor(t_minor **monitor)
 {
 	int	i;
 
 	i = 0;
 	(*monitor)->timef = time_now();
 	(*monitor)->flag = 0;
-	if (ac == 6)
-		(*monitor)->meals = ft_atoi(av[5]);
-	else
-		(*monitor)->meals = -1;
-	(*monitor)->threads = malloc(sizeof(pthread_t) * ft_atoi(av[1]));
-	pthread_mutex_init(&(*monitor)->mtx_print, NULL);
-	pthread_mutex_init(&(*monitor)->mtx_last_eat, NULL);
 	pthread_mutex_init(&(*monitor)->mtx_philo_done, NULL);
-	pthread_mutex_init(&(*monitor)->mtx_flag, NULL);
+	pthread_mutex_init(&(*monitor)->check_died, NULL);
 }
 
-void	ft_philo(t_philo **philo, t_minor **monitor, char **av)
+void	norm2(t_philo **philo, pthread_mutex_t *forks, int ac, int i)
 {
-	t_philo		*copy;
-	pthread_t	l7aday;
-	pthread_mutex_t *forks;
-	int			i;
+	(*philo)->left_fork = &forks[i];
+	(*philo)->right_fork = &forks[(i + 1) % (*philo)->num_philo];
+	(*philo)->meals = ac;
+}
+
+pthread_mutex_t	*ft_norm(t_philo **p, t_minor **m, char **av, int ac)
+{
+	pthread_mutex_t	*forks;
+	int				i;
+	t_philo			*new;
 
 	i = 0;
-	forks =  malloc(sizeof(pthread_mutex_t) * ft_atoi(av[1]));
-	while (i <= ft_atoi(av[1]))
-	{
-		pthread_mutex_init(&forks[i], NULL);
-		i++;
-	}
+	forks = malloc(sizeof(pthread_mutex_t) * ft_atoi(av[1]));
 	while (i < ft_atoi(av[1]))
 	{
-		ft_lstadd_back1(philo, ft_inisialize_philo(av, i, monitor, forks));
+		pthread_mutex_init(&forks[i], NULL);
+		new = ft_inisialize_philo(av, i, m);
+		if (!new)
+			return (NULL);
+		norm2(&new, forks, ac, i);
+		ft_lstadd_back1(p, new);
 		i++;
 	}
-	copy = *philo;
+	return (forks);
+}
+
+void	ft_philo(t_philo **philo, t_minor **monitor, char **av, int ac)
+{
+	t_philo			*copy;
+	pthread_t		l7aday;
+	pthread_t		*threads;
+	pthread_mutex_t	*forks;
+	int				i;
+
 	i = 0;
-	while (copy)
-	{
-		pthread_create(&copy->minor->threads[i], NULL, ft_fork, (void *)copy);
-		copy = copy->next;
-	}
+	threads = malloc(sizeof(pthread_t) * ft_atoi(av[1]));
+	forks = ft_norm(philo, monitor, av, ac);
+	if (!philo || !forks)
+		return ;
 	copy = *philo;
-	pthread_create(&l7aday, NULL, ft_monitor, (void *)copy);
 	while (copy)
 	{
-		pthread_join(copy->minor->threads[i], NULL);
+		pthread_create(&threads[i++], NULL, ft_fork, (void *)copy);
 		copy = copy->next;
 	}
+	i = 0;
+	pthread_create(&l7aday, NULL, ft_monitor, (void *)*philo);
+	while (i < ft_atoi(av[1]))
+		pthread_join(threads[i++], NULL);
 	pthread_join(l7aday, NULL);
+	ft_free_forks(philo);
+	free(threads);
+	free(forks);
 }
 
 int	main(int ac, char **av)
 {
 	t_philo	*philo;
 	t_minor	*monitor;
+	size_t	po;
+	t_philo	*new;
 
 	philo = NULL;
 	if (ac != 5 && ac != 6)
@@ -103,7 +95,16 @@ int	main(int ac, char **av)
 	monitor = (t_minor *)malloc(sizeof(t_minor));
 	if (!monitor)
 		return (1);
-	ft_init_monitor(&monitor, ac, av);
-	ft_philo(&philo, &monitor, av);
+	po = return_value(av, ac);
+	ft_init_monitor(&monitor);
+	ft_philo(&philo, &monitor, av, po);
+	new = philo;
+	while (new)
+	{
+		philo = new;
+		new = new->next;
+		free(philo);
+	}
+	free(monitor);
 	return (0);
 }
